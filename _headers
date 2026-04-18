@@ -1,0 +1,12 @@
+/*
+  # GitHub Pages Security Headers
+  # Place this file in the ROOT of your repo alongside index.html
+  # GitHub Pages supports _headers via Cloudflare Pages — if using plain
+  # GitHub Pages these are enforced at CDN level. They still harden your site.
+
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  X-XSS-Protection: 1; mode=block
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
