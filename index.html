@@ -824,7 +824,6 @@ footer p { font-family:var(--mono); font-size:9px; color:var(--muted); letter-sp
     <h2 class="sec-title reveal">Establish Connection</h2>
     <div class="contact-grid">
       <a href="mailto:pandyaabhay909@gmail.com" class="contact-item reveal"><span class="contact-icon">MAIL</span>pandyaabhay909@gmail.com</a>
-      <a href="tel:9537825692" class="contact-item reveal"><span class="contact-icon">CALL</span>9537825692</a>
       <a href="https://github.com/Itachi-Hacks" target="_blank" class="contact-item reveal"><span class="contact-icon">GH</span>github.com/Itachi-Hacks</a>
       <a href="https://linkedin.com/in/abhay-pandya-149687236" target="_blank" class="contact-item reveal"><span class="contact-icon">LI</span>linkedin.com/in/abhay-pandya-149687236</a>
     </div>
@@ -983,16 +982,70 @@ setInterval(() => {
 /* ══════════════════════════════════════
    CONTACT FORM
 ══════════════════════════════════════ */
-function handleSend() {
+async function handleSend() {
   const btn = document.getElementById('send-btn');
+
+  const inputs = document.querySelectorAll('#page-contact .form-input, #page-contact .form-textarea');
+  const name    = inputs[0].value.trim();
+  const email   = inputs[1].value.trim();
+  const subject = inputs[2].value.trim();
+  const message = inputs[3].value.trim();
+
+  if (!name || !email || !message) {
+    btn.textContent = '[ ERROR: FILL ALL FIELDS ]';
+    btn.style.color = 'var(--accent3)';
+    setTimeout(() => {
+      btn.textContent = '[ TRANSMIT_MESSAGE ]';
+      btn.style.color = '';
+    }, 2000);
+    return;
+  }
+
   btn.textContent = '[ TRANSMITTING... ]';
   btn.style.opacity = '0.6';
-  setTimeout(() => {
-    btn.textContent = '[ TRANSMISSION SENT ✓ ]';
+  btn.disabled = true;
+
+  const WEBHOOK = 'https://discord.com/api/webhooks/1495036153710252062/QD2nvQhK6kSgJ2ezOOWpym-XBf4Y0HKsi6qKqIFKte42YlHSshtAQ2mfFint7pt6lfam';
+
+  const payload = {
+    username: '🔐 Portfolio Contact',
+    avatar_url: 'https://i.imgur.com/4M34hi2.png',
+    embeds: [{
+      title: '📩 New Message from Portfolio',
+      color: 0x00ff41,
+      fields: [
+        { name: '👤 Name',    value: name,              inline: true  },
+        { name: '📧 Email',   value: email,             inline: true  },
+        { name: '📌 Subject', value: subject || '—',    inline: false },
+        { name: '💬 Message', value: message,           inline: false },
+      ],
+      footer: { text: 'itachi-hacks.github.io · ' + new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) + ' IST' },
+      thumbnail: { url: 'https://i.imgur.com/4M34hi2.png' }
+    }]
+  };
+
+  try {
+    const res = await fetch(WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok || res.status === 204) {
+      btn.textContent = '[ TRANSMISSION SENT ✓ ]';
+      btn.style.opacity = '1';
+      btn.style.background = 'rgba(0,255,65,0.08)';
+      btn.style.color = 'var(--accent)';
+      inputs.forEach(i => i.value = '');
+    } else {
+      throw new Error('Discord error: ' + res.status);
+    }
+  } catch (err) {
+    btn.textContent = '[ TRANSMISSION FAILED — RETRY ]';
     btn.style.opacity = '1';
-    btn.style.background = 'rgba(0,255,65,0.08)';
-    btn.style.color = 'var(--accent)';
-  }, 1200);
+    btn.style.color = 'var(--accent3)';
+    btn.disabled = false;
+  }
 }
 </script>
 
