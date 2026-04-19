@@ -393,7 +393,7 @@ nav {
 /* ══════════════════════════════════════
    CONTACT
 ══════════════════════════════════════ */
-.contact-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; margin-bottom:44px; }
+.contact-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; }
 .contact-item {
   display:flex; align-items:center; gap:16px; background:var(--surface); border:1px solid var(--border);
   padding:18px 22px; text-decoration:none; color:var(--text2); font-size:14px; transition:all 0.25s; position:relative; overflow:hidden;
@@ -403,15 +403,6 @@ nav {
 .contact-item:hover::after { width:100%; }
 .contact-icon { font-family:var(--orb); font-size:10px; color:var(--accent); background:rgba(0,255,65,0.05); border:1px solid rgba(0,255,65,0.18); padding:8px 12px; min-width:54px; text-align:center; text-shadow:0 0 8px rgba(0,255,65,0.4); white-space:nowrap; }
 
-.contact-form { background:var(--surface); border:1px solid var(--border); padding:32px; }
-.form-title { font-family:var(--orb); font-size:13px; color:var(--accent); letter-spacing:2px; margin-bottom:24px; }
-.form-row { margin-bottom:18px; }
-.form-label { font-size:10px; color:var(--muted); letter-spacing:3px; display:block; margin-bottom:7px; }
-.form-input,.form-textarea { width:100%; background:var(--bg); border:1px solid var(--border); color:var(--text2); font-family:var(--mono); font-size:14px; padding:11px 15px; outline:none; resize:vertical; transition:border 0.2s; }
-.form-input:focus,.form-textarea:focus { border-color:rgba(0,255,65,0.38); box-shadow:0 0 14px rgba(0,255,65,0.05); }
-.form-textarea { min-height:120px; }
-.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
-@media(max-width:640px){ .form-grid{grid-template-columns:1fr;} }
 
 /* ══════════════════════════════════════
    ACHIEVEMENTS
@@ -829,30 +820,7 @@ footer p { font-family:var(--mono); font-size:9px; color:var(--muted); letter-sp
       <a href="https://github.com/Itachi-Hacks" target="_blank" class="contact-item reveal"><span class="contact-icon">GH</span>github.com/Itachi-Hacks</a>
       <a href="https://linkedin.com/in/abhay-pandya-149687236" target="_blank" class="contact-item reveal"><span class="contact-icon">LI</span>linkedin.com/in/abhay-pandya-149687236</a>
     </div>
-    <div class="contact-form reveal">
-      <p class="form-title">[ SEND_ENCRYPTED_MESSAGE ]</p>
-      <div class="form-grid">
-        <div class="form-row">
-          <label class="form-label">// NAME</label>
-          <input type="text" class="form-input" placeholder="your_handle" id="cf-name" maxlength="100" autocomplete="off">
-        </div>
-        <div class="form-row">
-          <label class="form-label">// EMAIL</label>
-          <input type="email" class="form-input" placeholder="your@email.com" id="cf-email" maxlength="200" autocomplete="off">
-        </div>
-      </div>
-      <div class="form-row">
-        <label class="form-label">// SUBJECT</label>
-        <input type="text" class="form-input" placeholder="mission_briefing" id="cf-subject" maxlength="200" autocomplete="off">
-      </div>
-      <div class="form-row">
-        <label class="form-label">// MESSAGE</label>
-        <textarea class="form-textarea" placeholder="> type your message here...&#10;> all transmissions encrypted&#10;> connection is secured" id="cf-message" maxlength="2000"></textarea>
-      </div>
-      <!-- Honeypot field: hidden from real users, bots fill it in -->
-      <input type="text" id="cf-hp" style="display:none;position:absolute;left:-9999px" tabindex="-1" autocomplete="off">
-      <button class="btn btn-primary" style="width:100%;text-align:center" id="send-btn" onclick="handleSend()">[ TRANSMIT_MESSAGE ]</button>
-    </div>
+
   </div>
 </div>
 
@@ -1002,118 +970,7 @@ setInterval(() => {
   }
 }, 9000);
 
-/* ══════════════════════════════════════
-   CONTACT FORM — SECURED
-   • Webhook URL removed from frontend
-   • Routes through Cloudflare Worker proxy
-   • Input sanitization (XSS prevention)
-   • Honeypot bot detection
-   • 30s rate-limit cooldown
-   • Length validation
-══════════════════════════════════════ */
 
-// ── Proxy URL: your Discord webhook never touches the browser ──
-// Replace this with YOUR Cloudflare Worker URL after deploying worker.js
-const PROXY_URL = 'https://divine-feather-aab7.hacksitachi89.workers.dev/';
-
-let _lastSent = 0;
-
-function _sanitize(str) {
-  return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&#x27;')
-    .trim();
-}
-
-function _isValidEmail(e) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-}
-
-async function handleSend() {
-  const btn = document.getElementById('send-btn');
-
-  // Honeypot check — bots fill hidden fields, humans don't
-  if (document.getElementById('cf-hp').value) {
-    btn.textContent = '[ TRANSMISSION BLOCKED ]';
-    btn.style.color = 'var(--accent3)';
-    return;
-  }
-
-  // Rate limit: 30 seconds between submissions
-  const now = Date.now();
-  if (now - _lastSent < 30000 && _lastSent !== 0) {
-    const wait = Math.ceil((30000 - (now - _lastSent)) / 1000);
-    btn.textContent = `[ COOLDOWN: WAIT ${wait}s ]`;
-    btn.style.color = 'var(--accent4)';
-    setTimeout(() => { btn.textContent = '[ TRANSMIT_MESSAGE ]'; btn.style.color = ''; }, wait * 1000);
-    return;
-  }
-
-  const rawName    = document.getElementById('cf-name').value;
-  const rawEmail   = document.getElementById('cf-email').value;
-  const rawSubject = document.getElementById('cf-subject').value;
-  const rawMessage = document.getElementById('cf-message').value;
-
-  const name    = _sanitize(rawName);
-  const email   = _sanitize(rawEmail);
-  const subject = _sanitize(rawSubject);
-  const message = _sanitize(rawMessage);
-
-  // Validation
-  if (!name || !email || !message) {
-    btn.textContent = '[ ERROR: FILL ALL FIELDS ]';
-    btn.style.color = 'var(--accent3)';
-    setTimeout(() => { btn.textContent = '[ TRANSMIT_MESSAGE ]'; btn.style.color = ''; }, 2000);
-    return;
-  }
-  if (!_isValidEmail(email)) {
-    btn.textContent = '[ ERROR: INVALID EMAIL ]';
-    btn.style.color = 'var(--accent3)';
-    setTimeout(() => { btn.textContent = '[ TRANSMIT_MESSAGE ]'; btn.style.color = ''; }, 2000);
-    return;
-  }
-  if (message.length > 2000) {
-    btn.textContent = '[ ERROR: MESSAGE TOO LONG ]';
-    btn.style.color = 'var(--accent3)';
-    setTimeout(() => { btn.textContent = '[ TRANSMIT_MESSAGE ]'; btn.style.color = ''; }, 2000);
-    return;
-  }
-
-  btn.textContent = '[ TRANSMITTING... ]';
-  btn.style.opacity = '0.6';
-  btn.disabled = true;
-
-  try {
-    const res = await fetch(PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, subject: subject || '—', message })
-    });
-
-    if (res.ok || res.status === 204) {
-      _lastSent = Date.now();
-      btn.textContent = '[ TRANSMISSION SENT ✓ ]';
-      btn.style.opacity = '1';
-      btn.style.background = 'rgba(0,255,65,0.08)';
-      btn.style.color = 'var(--accent)';
-      btn.disabled = false;
-      document.getElementById('cf-name').value = '';
-      document.getElementById('cf-email').value = '';
-      document.getElementById('cf-subject').value = '';
-      document.getElementById('cf-message').value = '';
-    } else {
-      throw new Error('proxy error: ' + res.status);
-    }
-  } catch (err) {
-    btn.textContent = '[ TRANSMISSION FAILED — RETRY ]';
-    btn.style.opacity = '1';
-    btn.style.color = 'var(--accent3)';
-    btn.disabled = false;
-  }
-}
 </script>
 
 </body>
