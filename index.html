@@ -436,10 +436,52 @@ footer p { font-family:var(--mono); font-size:9px; color:var(--muted); letter-sp
 @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
 
 /* ══════════════════════════════════════
+   HAMBURGER / MOBILE MENU
+══════════════════════════════════════ */
+.hamburger {
+  display: none; flex-direction: column; justify-content: center; gap: 5px;
+  background: transparent; border: 1px solid rgba(0,255,65,0.2); cursor: pointer;
+  padding: 8px 10px; transition: border-color 0.2s;
+}
+.hamburger:hover { border-color: var(--accent); }
+.hamburger span {
+  display: block; width: 20px; height: 1.5px; background: var(--accent);
+  transition: all 0.3s ease; box-shadow: 0 0 6px var(--accent);
+}
+.hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+/* Mobile slide-down menu */
+.mobile-menu {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(1,2,3,0.98); z-index: 490; flex-direction: column;
+  justify-content: center; align-items: center; gap: 6px;
+  padding: 100px 24px 40px;
+  border-top: 1px solid var(--border);
+}
+.mobile-menu.open { display: flex; animation: menuSlideIn 0.3s ease; }
+@keyframes menuSlideIn {
+  from { opacity:0; transform: translateY(-12px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.mobile-nav-item {
+  font-family: var(--mono); font-size: 13px; letter-spacing: 3px;
+  color: #5aaa5a; background: transparent; border: 1px solid var(--border);
+  padding: 14px 0; width: 100%; max-width: 320px; text-align: center;
+  cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+}
+.mobile-nav-item::before { content:''; position:absolute; inset:0; background:rgba(0,255,65,0.04); transform:scaleX(0); transform-origin:left; transition:transform 0.3s; }
+.mobile-nav-item:hover, .mobile-nav-item.active { color: var(--accent); border-color: rgba(0,255,65,0.4); text-shadow: 0 0 8px rgba(0,255,65,0.4); }
+.mobile-nav-item:hover::before, .mobile-nav-item.active::before { transform:scaleX(1); }
+.mobile-nav-num { color: rgba(0,255,65,0.3); margin-right: 10px; font-size: 10px; }
+
+/* ══════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════ */
-@media(max-width:640px){
-  .nav-tab { padding:10px 12px; font-size:9px; }
+@media(max-width:768px){
+  .nav-tabs { display: none; }
+  .hamburger { display: flex; }
   .glitch,.glitch-white { font-size:clamp(44px,14vw,72px) !important; }
   .hero-stats { gap:20px; }
   .proj-grid { grid-template-columns:1fr; }
@@ -448,6 +490,7 @@ footer p { font-family:var(--mono); font-size:9px; color:var(--muted); letter-sp
   .contact-grid { grid-template-columns:1fr; }
   .container { padding:40px 16px 60px; }
   .nav-status { display:none; }
+  .nav-logo { font-size: 9px; letter-spacing: 2px; }
 }
 </style>
 </head>
@@ -474,6 +517,9 @@ footer p { font-family:var(--mono); font-size:9px; color:var(--muted); letter-sp
       <span><div class="status-dot"></div> SYSTEM ONLINE</span>
       <span><div class="status-dot red"></div> THREAT ACTIVE</span>
     </div>
+    <button class="hamburger" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('home',this)"><span class="tab-num">00</span>HOME</button>
@@ -486,6 +532,18 @@ footer p { font-family:var(--mono); font-size:9px; color:var(--muted); letter-sp
     <button class="nav-tab" onclick="showPage('contact',this)"><span class="tab-num">07</span>CONTACT</button>
   </div>
 </nav>
+
+<!-- MOBILE MENU OVERLAY -->
+<div class="mobile-menu" id="mobile-menu">
+  <button class="mobile-nav-item active" id="mob-home"           onclick="mobileNav('home')"><span class="mobile-nav-num">00</span>HOME</button>
+  <button class="mobile-nav-item"        id="mob-experience"     onclick="mobileNav('experience')"><span class="mobile-nav-num">01</span>EXPERIENCE</button>
+  <button class="mobile-nav-item"        id="mob-projects"       onclick="mobileNav('projects')"><span class="mobile-nav-num">02</span>PROJECTS</button>
+  <button class="mobile-nav-item"        id="mob-skills"         onclick="mobileNav('skills')"><span class="mobile-nav-num">03</span>SKILLS</button>
+  <button class="mobile-nav-item"        id="mob-certifications" onclick="mobileNav('certifications')"><span class="mobile-nav-num">04</span>CERTS</button>
+  <button class="mobile-nav-item"        id="mob-achievements"   onclick="mobileNav('achievements')"><span class="mobile-nav-num">05</span>ACHIEVEMENTS</button>
+  <button class="mobile-nav-item"        id="mob-education"      onclick="mobileNav('education')"><span class="mobile-nav-num">06</span>EDUCATION</button>
+  <button class="mobile-nav-item"        id="mob-contact"        onclick="mobileNav('contact')"><span class="mobile-nav-num">07</span>CONTACT</button>
+</div>
 
 <!-- ════════════════════
      PAGE 00: HOME
@@ -922,6 +980,32 @@ function drawMatrix() {
 initMatrix();
 setInterval(drawMatrix, 50);
 window.addEventListener('resize', initMatrix);
+
+/* ══════════════════════════════════════
+   MOBILE MENU
+══════════════════════════════════════ */
+function toggleMobileMenu() {
+  const menu = document.getElementById('mobile-menu');
+  const btn  = document.getElementById('hamburger-btn');
+  const open = menu.classList.toggle('open');
+  btn.classList.toggle('open', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+}
+
+function mobileNav(id) {
+  // update desktop tabs too
+  const desktopTab = [...document.querySelectorAll('.nav-tab')]
+    .find(t => t.getAttribute('onclick') && t.getAttribute('onclick').includes("'" + id + "'"));
+  showPage(id, desktopTab || null);
+  // update mobile active state
+  document.querySelectorAll('.mobile-nav-item').forEach(i => i.classList.remove('active'));
+  const mob = document.getElementById('mob-' + id);
+  if (mob) mob.classList.add('active');
+  // close menu
+  document.getElementById('mobile-menu').classList.remove('open');
+  document.getElementById('hamburger-btn').classList.remove('open');
+  document.body.style.overflow = '';
+}
 
 /* ══════════════════════════════════════
    PAGE NAVIGATION
